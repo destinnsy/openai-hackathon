@@ -1,0 +1,9 @@
+chromadb
+openai
+loguru
+pydantic
+tenacity
+llama-index
+fastapi
+uvicorn
+python-dotenv
