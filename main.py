@@ -1,16 +1,33 @@
-# This is a sample Python script.
+from dotenv import load_dotenv
+load_dotenv()  # This will load the environment variables from the .env file
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+from fastapi import FastAPI, Query
+from pydantic import BaseModel
+from typing import Annotated
+
+from helper.store import store
+from helper.retrieve import retrieve
+
+app = FastAPI()
+
+class StoreRequest(BaseModel):
+    user_messages: list[str]
+    assistant_messages: list[str]
+
+@app.post("/store")
+async def store_api(request: StoreRequest):
+    store(request.user_messages, request.assistant_messages)
+    return {"message": "Successfully stored"}
+
+class RetrieveRequest(BaseModel):
+    query: str
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+@app.post("/retrieve")
+async def retrieve_api(request: RetrieveRequest):
+    retrieved_content = retrieve(request.query)
+    return {"content": retrieved_content}
 
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+@app.get("/")
+async def root(q: Annotated[str | None, Query(max_length=50)] = None):
+    return {"message": "Hello World"}
