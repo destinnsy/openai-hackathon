@@ -5,7 +5,7 @@ import chromadb
 import os
 from openai import OpenAI
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from chromadb import  EmbeddingFunction, Embeddings
 
 chroma_client = chromadb.EphemeralClient()

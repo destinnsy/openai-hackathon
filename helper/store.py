@@ -1,14 +1,15 @@
 import time
-from typing import Optional
 from datetime import datetime
 from loguru import logger
-from pydantic import BaseModel, Field
 
 from tenacity import retry, stop_after_attempt, wait_fixed
 from typing import Type, Union, Any
 from llama_index.core.output_parsers.utils import parse_json_markdown
 import json
 from .db import openai_client, insert_to_index, collection
+
+from pydantic import BaseModel, Field
+from typing import Optional
 
 
 def make_request(model: str, messages: list[dict[str, str]]) -> str:
@@ -148,13 +149,56 @@ def insert_snippets_to_index(collection, conversation_snippets: ConversationSnip
         metadatas=[{"date_of_event": snippet.date_of_event} if snippet.date_of_event else {"date_of_evebt": ""} for snippet in conversation_snippets.snippets]
     )
 
+
+
+class CurrentKnowledge(BaseModel):
+    knowledge: Optional[str] = Field(description="The current knowledge of the user", default=None)
+
+current_knowledge = CurrentKnowledge(knowledge='')
+
+UPDATE_KNOWLEDGE_PROMPT = """\
+You are a career confidante. Given a conversation that just happened between you and the user, and your current knowledge of the user, update your knowledge of the user.
+In your updated knowledge, you should include useful information for future interactions with the user.
+The conversation just happened, so you should integrate the new information from the conversation into your updated knowledge. 
+
+Return only the updated knowledge in JSON format.
+
+The conversation is as follows:
+{conversation}
+
+Your current knowledge of the user is as follows:
+{knowledge}
+
+Response Format:
+{{
+    "knowledge": "Updated knowledge of the user."
+}}
+"""
+
+def update_knowledge(user_messages:list[str], assistant_messages:list[str], input_knowledge: CurrentKnowledge):
+    conversation = _construct_conversation(user_messages, assistant_messages)
+    prompt = UPDATE_KNOWLEDGE_PROMPT.format(conversation=conversation, knowledge=input_knowledge)
+    global current_knowledge
+    current_knowledge = chat_completion_request(
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+        response_model=CurrentKnowledge
+    )
+    print(current_knowledge)
+    return current_knowledge
+
 async def store(user_messages:list[str], assistant_messages:list[str]):
     conversation_snippets = extract_snippets_from_conversation(
         user_messages=user_messages,
         assistant_messages=assistant_messages
     )
     # determine_snippets_to_add_or_delete()
-    # delete_documents_from_index()
-    print(conversation_snippets)
+    # delete_documents_from_index()\
     insert_snippets_to_index(collection=collection, conversation_snippets=conversation_snippets)
     logger.info(f"There are now {collection.count()} documents in the index")
+
+    update_knowledge(user_messages, assistant_messages, current_knowledge)
+
+def recap():
+    return current_knowledge.knowledge

@@ -5,8 +5,9 @@ from fastapi import FastAPI, Query
 from pydantic import BaseModel
 from typing import Annotated
 
-from helper.store import store
+from helper.store import store, recap
 from helper.retrieve import retrieve
+# from helper.knowledge import recap
 import asyncio
 
 app = FastAPI()
@@ -28,6 +29,9 @@ async def retrieve_api(request: RetrieveRequest):
     retrieved_content = retrieve(request.query)
     return {"content": retrieved_content}
 
+@app.get("/recap")
+def recap_api():
+    return {"content": recap()}
 @app.get("/")
 async def root(q: Annotated[str | None, Query(max_length=50)] = None):
     return {"message": "Hello World"}
