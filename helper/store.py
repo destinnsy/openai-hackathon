@@ -68,6 +68,53 @@ class ConversationSnippets(BaseModel):
     snippets: list[Snippet]
 
 extract_snippets_from_conversation_prompt = """\
+You are to extract snippets of a given conversation between a career confidante and a user, which the confidante should take node of. Think of it as the confidante jotting key points down during the conversation in their journal.
+Each snippet has to contain sufficient information to stand alone and be understood without the context of the entire conversation.
+
+**
+IMPORTANT: Only return the output in JSON format. The JSON structure should be a list of snippet objects, each with the fields:
+	•	"text" (str): The extracted text snippet from the conversation.
+	•	"date_of_event" (string): The date of the event mentioned in the snippet. If the snippet is not about an event, this field should be null. Date shouuld be formatted as "YYYY-MM-DD".
+
+Example conversation that happend on 2024-02-01:
+User: I am a software engineer and I am considering a career change.
+Confidante: What are you considering?
+User: I am considering becoming a data scientist.
+Confidante: What is motivating you to make this change?
+User: I am interested in working with data and I want to leverage my programming skills. I am also going to start taking a course in data science.
+Confidante: That's awesome, when do you plan to start the course?
+User: I plan to start next month.
+Confidante: Great!
+
+Example JSON:
+{{
+    "snippets": [
+        {{
+            "text": "User is considering becoming a data scientist.",
+            "date_of_event": null
+        }},
+        {{
+            "text": "User is interested in working with data and wants to leverage programming skills. User is also going to start taking a course in data science.",
+            "date_of_event": null
+        }},
+        {{
+            "text": "User plans to start data science course next month.",
+            "date_of_event": "2024-03-01"
+        }}
+
+    ]
+}}
+===== END OF EXAMPLE ======
+
+The 'snippets' key must be a list of snippets.
+The result must be a list of objects with 'text' and 'date_of_event' keys.
+Ensure each snippet contains sufficient information to stand alone and be understood without the context of the entire conversation.
+**
+
+Conversation that happened on {date}:
+{conversation}
+
+JSON:
 """
 
 def _get_date_today():
@@ -101,7 +148,7 @@ def insert_snippets_to_index(collection, conversation_snippets: ConversationSnip
         metadatas=[{"date_of_event": snippet.date_of_event} if snippet.date_of_event else {"date_of_evebt": ""} for snippet in conversation_snippets.snippets]
     )
 
-def store(user_messages:list[str], assistant_messages:list[str]):
+async def store(user_messages:list[str], assistant_messages:list[str]):
     conversation_snippets = extract_snippets_from_conversation(
         user_messages=user_messages,
         assistant_messages=assistant_messages

@@ -7,6 +7,7 @@ from typing import Annotated
 
 from helper.store import store
 from helper.retrieve import retrieve
+import asyncio
 
 app = FastAPI()
 
@@ -16,12 +17,11 @@ class StoreRequest(BaseModel):
 
 @app.post("/store")
 async def store_api(request: StoreRequest):
-    store(request.user_messages, request.assistant_messages)
+    asyncio.create_task(store(request.user_messages, request.assistant_messages))
     return {"message": "Successfully stored"}
 
 class RetrieveRequest(BaseModel):
     query: str
-
 
 @app.post("/retrieve")
 async def retrieve_api(request: RetrieveRequest):
