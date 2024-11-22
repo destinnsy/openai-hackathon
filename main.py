@@ -9,8 +9,17 @@ from helper.store import store, recap
 from helper.retrieve import retrieve
 # from helper.knowledge import recap
 import asyncio
-
+from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust this to your needs
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class StoreRequest(BaseModel):
     user_messages: list[str]

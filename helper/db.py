@@ -53,3 +53,11 @@ def query_index(query_texts, n_results=1, where=None, where_document=None):
         where_document=where_document,
     )
     return QueryResult(**query_result)
+
+def update_index(ids, documents, metadatas=None):
+    collection.update(
+        ids=ids,
+        metadatas=metadatas,
+        documents=documents,
+    )
+    logger.info(f"Successfully updated {len(ids)} documents")

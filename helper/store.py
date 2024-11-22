@@ -6,7 +6,7 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 from typing import Type, Union, Any
 from llama_index.core.output_parsers.utils import parse_json_markdown
 import json
-from .db import openai_client, insert_to_index, collection
+from .db import openai_client, insert_to_index, collection, delete_from_index, update_index
 
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -154,7 +154,7 @@ def insert_snippets_to_index(collection, conversation_snippets: ConversationSnip
 class CurrentKnowledge(BaseModel):
     knowledge: Optional[str] = Field(description="The current knowledge of the user", default=None)
 
-current_knowledge = CurrentKnowledge(knowledge='')
+current_knowledge = CurrentKnowledge(knowledge='User mentioned that they just got laid off from a business analyst role, and is actively taking data science courses in order to upskill themselves. The layoff was unexpected and impacts them badly, as the user is the sole breadwinner for a family of 4. They are middle-income, but with two young kids, expenses are a bit tight. They mentioned it would be ideal to have a new job in the next half year if possible, and is willing to upskill themselves or pivot industries/roles.')
 
 UPDATE_KNOWLEDGE_PROMPT = """\
 You are a career confidante. Given a conversation that just happened between you and the user, and your current knowledge of the user, update your knowledge of the user.
@@ -399,3 +399,17 @@ async def store(user_messages:list[str], assistant_messages:list[str]):
 
 def recap():
     return current_knowledge.knowledge
+
+
+insert_to_index(
+    collection=collection,
+    documents=[
+        "user got laid off in 2024-11-10",
+        "user is currently taking introduction to ML",
+        "user is the sole breadwinner for a family of 4",
+        "user has two young kids",
+        "user is middle-income",
+        "user is willing to upskill themselves or pivot industries/roles",
+        "user was previously a business analyst",
+    ]
+)
